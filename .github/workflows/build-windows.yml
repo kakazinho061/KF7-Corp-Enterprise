@@ -1,0 +1,58 @@
+name: Build KF7 Corp Enterprise
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-windows:
+    name: Gerar KF7 Corp Enterprise.exe
+    runs-on: windows-latest
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar PyInstaller
+        run: python -m pip install --upgrade pyinstaller
+
+      - name: Verificar Python
+        run: python -m py_compile KF7_Corp_Enterprise_v2.py
+
+      - name: Gerar EXE
+        run: |
+          python -m PyInstaller `
+            --noconfirm `
+            --clean `
+            --onefile `
+            --windowed `
+            --name "KF7 Corp Enterprise" `
+            KF7_Corp_Enterprise_v2.py
+
+      - name: Verificar EXE
+        shell: pwsh
+        run: |
+          $exe = "dist\KF7 Corp Enterprise.exe"
+
+          if (!(Test-Path $exe)) {
+            Write-Error "O executável não foi criado."
+            exit 1
+          }
+
+          Write-Host "EXE criado com sucesso!"
+          Get-Item $exe | Select-Object Name, Length
+
+      - name: Disponibilizar EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: KF7-Corp-Enterprise-Windows
+          path: "dist/KF7 Corp Enterprise.exe"
+          if-no-files-found: error
+          retention-days: 30
