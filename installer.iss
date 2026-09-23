@@ -26,8 +26,8 @@ Uninstallable=yes
 Source: "dist\KF7 Corp Enterprise.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{autodesktop}\KF7 Corp Enterprise"; Filename: "{app}\KF7 Corp Enterprise.exe"
-Name: "{autoprograms}\KF7 Corp Enterprise"; Filename: "{app}\KF7 Corp Enterprise.exe"
+Name: "{autodesktop}\KF7 Corp Enterprise"; Filename: "{app}\KF7 Corp Enterprise.exe"; IconFilename: "{app}\KF7 Corp Enterprise.exe"
+Name: "{autoprograms}\KF7 Corp Enterprise"; Filename: "{app}\KF7 Corp Enterprise.exe"; IconFilename: "{app}\KF7 Corp Enterprise.exe"
 
 [Run]
 Filename: "{app}\KF7 Corp Enterprise.exe"; \
