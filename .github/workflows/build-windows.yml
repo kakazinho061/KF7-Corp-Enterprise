@@ -32,9 +32,10 @@ jobs:
             --noconfirm `
             --clean `
             --onefile `
-            --windowed `
-            --name "KF7 Corp Enterprise" `
-            KF7_Corp_Enterprise_v2.py
+          --windowed `
+          --icon "KF7_Corp.ico" `
+          --name "KF7 Corp Enterprise" `
+          KF7_Corp_Enterprise_v2.py
 
       - name: Verificar EXE
         shell: pwsh
