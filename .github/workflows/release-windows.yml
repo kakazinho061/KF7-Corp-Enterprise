@@ -1,0 +1,120 @@
+name: KF7 Corp Enterprise - Release Windows
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Compilar e publicar Release
+    runs-on: windows-latest
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar PyInstaller
+        run: python -m pip install --upgrade pyinstaller
+
+      - name: Validar Python
+        run: python -m py_compile KF7_Corp_Enterprise_v2.py
+
+      - name: Obter versão da Release
+        id: version
+        shell: powershell
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Atualizar versão do instalador
+        shell: powershell
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+
+          $content = Get-Content "installer.iss" -Raw
+
+          $content = $content -replace `
+            '#define MyAppVersion ".*"', `
+            "#define MyAppVersion `"$version`""
+
+          Set-Content "installer.iss" $content
+
+          Write-Host "Versão do instalador: $version"
+
+      - name: Gerar aplicativo
+        shell: powershell
+        run: |
+          python -m PyInstaller `
+            --noconfirm `
+            --clean `
+            --onefile `
+            --windowed `
+            --icon "KF7_Corp.ico" `
+            --name "KF7 Corp Enterprise" `
+            KF7_Corp_Enterprise_v2.py
+
+      - name: Instalar Inno Setup
+        shell: powershell
+        run: |
+          choco install innosetup --no-progress -y
+
+      - name: Criar instalador
+        shell: powershell
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" `
+            "installer.iss"
+
+      - name: Verificar instalador
+        shell: powershell
+        run: |
+          $installer = "installer\KF7-Corp-Enterprise-Setup.exe"
+
+          if (!(Test-Path $installer)) {
+              Write-Error "O instalador não foi criado."
+              exit 1
+          }
+
+          Write-Host "Instalador criado com sucesso!"
+          Get-Item $installer | Select-Object Name, Length, FullName
+
+      - name: Publicar Release
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $installer = "installer\KF7-Corp-Enterprise-Setup.exe"
+
+          gh release view $tag *> $null
+
+          if ($LASTEXITCODE -eq 0) {
+              Write-Host "Release $tag já existe."
+              Write-Host "Enviando instalador para a Release..."
+
+              gh release upload `
+                $tag `
+                $installer `
+                --clobber
+          }
+          else {
+              Write-Host "Release $tag não existe."
+              Write-Host "Criando nova Release..."
+
+              gh release create `
+                $tag `
+                $installer `
+                --title "KF7 Corp Enterprise $tag" `
+                --generate-notes `
+                --latest
+          }
+
+          Write-Host "Release publicada com sucesso!"
