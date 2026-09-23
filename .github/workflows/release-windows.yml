@@ -118,3 +118,4 @@ jobs:
           }
 
           Write-Host "Release publicada com sucesso!"
+
